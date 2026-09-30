@@ -101,10 +101,13 @@ h1 {
   width: min(72rem, calc(100% - clamp(2rem, 8vw, 8rem)));
   height: 100%;
   margin: 0 auto;
-  align-items: center;
 }
 
-.slide.active { display: grid; }
+.slide.active {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
 .slide h1, .slide h2 {
   max-width: 16ch;
