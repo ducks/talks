@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A lightning talk introducing Nix and NixOS">
+  <title>Nix &amp; NixOS</title>
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body class="deck" data-deck-title="Nix &amp; NixOS">
+  <main>
+    <section class="slide" data-title="Nix"><div><div class="eyebrow">Lightning talk</div><h1>Nix</h1><p class="quiet">From reproducible packages to an entire operating system</p></div></section>
+    <section class="slide"><div><h2>Agenda</h2><ul><li>What Nix is</li><li>How the Nix store and build graph work</li><li>Reproducible development environments</li><li>How NixOS applies the model to an entire machine</li><li>Why any of this is useful</li></ul></div></section>
+    <section class="slide"><div><h2>A different question</h2><p>Most package managers ask:</p><blockquote><p>How do I install this package?</p></blockquote><p>Nix asks:</p><blockquote><p>How do I describe this build so I can produce it again?</p></blockquote></div></section>
+    <section class="slide"><div><h2>What is Nix?</h2><ul><li>A package manager</li><li>A build system</li><li>A functional configuration language</li><li>An immutable store of build results</li></ul><p class="accent">One model connects all four.</p></div></section>
+    <section class="slide"><div><h2>Builds are functions</h2><pre><code>build(source, compiler, dependencies, flags)
+    -&gt; /nix/store/9f8...-ripgrep-14.1.0</code></pre><p>Change an input and you get a new output path.</p><p class="quiet">The old output is not overwritten.</p></div></section>
+    <section class="slide"><div><h2>Nothing fights over /usr/lib</h2><pre><code>/nix/store/a1...-openssl-3.0
+/nix/store/b7...-openssl-3.3
+/nix/store/9f...-my-application</code></pre><ul><li>Multiple versions coexist</li><li>Dependencies do not compete globally</li><li>Profiles select which results you see</li></ul></div></section>
+    <section class="slide"><div><h2>Realizing the graph</h2><p>Nix evaluates a dependency graph, then realizes its missing outputs.</p><ul><li>Download an identical result from a binary cache</li><li>Build it in an isolated environment when needed</li><li>Assemble a profile from immutable store paths</li><li>Switch to that profile atomically</li></ul></div></section>
+    <section class="slide"><div><h2>One level up: the project</h2><pre><code>nix-shell        # shell.nix
+nix develop      # flake.nix</code></pre><p>Describe the complete environment needed to work on a project.</p><p class="accent">Enter the project and the tools appear. Leave it and they disappear.</p></div></section>
+    <section class="slide"><div><h2>A development shell</h2><pre><code>{ pkgs ? import &lt;nixpkgs&gt; {} }:
+
+pkgs.mkShell {
+  packages = with pkgs; [
+    nodejs_22 ruby_3_4 postgresql_17 gnumake
+  ];
+}</code></pre><pre><code>nix-shell</code></pre></div></section>
+    <section class="slide"><div><div class="eyebrow">One more level</div><h1>NixOS</h1><blockquote><p>What if we describe the whole operating system with Nix?</p></blockquote></div></section>
+    <section class="slide"><div><h2>Describe the machine</h2><pre><code>{ pkgs, ... }: {
+  networking.hostName = "demo";
+  time.timeZone = "Europe/Madrid";
+  users.users.ducks = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" "networkmanager" ];
+  };
+  services.openssh.enable = true;
+  services.postgresql.enable = true;
+  environment.systemPackages = with pkgs; [ git ripgrep neovim ];
+}</code></pre></div></section>
+    <section class="slide"><div><h2>Build, switch, keep the old one</h2><pre><code>sudo nixos-rebuild switch</code></pre><ul><li>Modules combine into one system configuration</li><li>Nix builds a complete new generation</li><li>Activation switches the running machine to it</li><li>Older generations remain available for rollback</li></ul><p class="quiet">Even the boot menu can take you back.</p></div></section>
+    <section class="slide"><div><h2>Executable documentation</h2><p>Traditional instructions say:</p><blockquote><p>Install these packages, edit these files, then restart everything.</p></blockquote><p>A NixOS configuration says what the machine <em>should be</em>.</p><p class="accent">Buildable. Reviewable. Reproducible. Recoverable.</p></div></section>
+    <section class="slide"><div><div class="eyebrow">The idea</div><h2>If we can describe a package, why not describe the entire computer?</h2></div></section>
+  </main>
+  <nav class="deck-nav" aria-label="Slide navigation"><a href="../" aria-label="All talks">← Talks</a><button data-previous aria-label="Previous slide">←</button><span class="slide-count" aria-live="polite"></span><button data-next aria-label="Next slide">→</button></nav>
+  <div class="progress" aria-hidden="true"></div>
+  <script src="../assets/deck.js"></script>
+</body>
+</html>
